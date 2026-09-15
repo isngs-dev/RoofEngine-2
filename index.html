@@ -172,12 +172,15 @@
       <p style="font-size:clamp(16px,1.6vw,19px);line-height:1.65;color:rgba(255,255,255,0.68);margin:0 0 10px;max-width:720px;margin-left:auto;margin-right:auto;">From the moment a homeowner clicks your ad to the moment an inspection lands on your calendar, every step is connected.</p>
       <p style="font-size:clamp(16px,1.6vw,19px);line-height:1.65;color:rgba(255,255,255,0.68);margin:0 0 44px;">Watch how Roof Engine turns a roofing inquiry into a real sales opportunity.</p>
 
-      <div onclick="var v=this.querySelector('video'),b=this.querySelector('.play-btn'),c=this.querySelector('.caption');if(v.paused){v.play();v.style.opacity=1;b.style.display='none';c.style.display='none';}else{v.pause();v.style.opacity=0.45;b.style.display='flex';c.style.display='block';}" style="aspect-ratio:16/9;background:linear-gradient(160deg,#12224a,#0a1224);border:1px solid rgba(255,255,255,0.12);border-radius:18px;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 50px 100px -40px rgba(0,0,0,0.7);margin-bottom:44px;overflow:hidden;cursor:pointer;">
-        <video src="uploads/Roof%20Engine.mp4" preload="metadata" playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.45;transition:opacity .3s ease;"></video>
-        <div class="play-btn" style="position:relative;width:76px;height:76px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;">
-          <div style="width:0;height:0;border-top:12px solid transparent;border-bottom:12px solid transparent;border-left:18px solid #ffffff;margin-left:4px;"></div>
-        </div>
-        <div class="caption" style="position:absolute;bottom:22px;left:0;right:0;text-align:center;font-family:'IBM Plex Sans',sans-serif;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.4);">[ Video: The Roof Engine Process ]</div>
+      <div style="aspect-ratio:16/9;background:linear-gradient(160deg,#12224a,#0a1224);border:1px solid rgba(255,255,255,0.12);border-radius:18px;position:relative;box-shadow:0 50px 100px -40px rgba(0,0,0,0.7);margin-bottom:44px;overflow:hidden;">
+        <video ref="{{ videoRef }}" src="uploads/Roof%20Engine.mp4" poster="assets/video-thumbnail.jpg" controls="controls" preload="auto" playsinline onplay="{{ onVideoPlay }}" onpause="{{ onVideoPause }}" style="display:block;width:100%;height:100%;object-fit:cover;"></video>
+        <sc-if value="{{ !videoPlaying }}">
+          <div onclick="{{ togglePlayback }}" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+            <div style="width:76px;height:76px;border-radius:50%;background:rgba(10,18,36,0.55);border:1.5px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;">
+              <div style="width:0;height:0;border-top:12px solid transparent;border-bottom:12px solid transparent;border-left:18px solid #ffffff;margin-left:4px;"></div>
+            </div>
+          </div>
+        </sc-if>
       </div>
 
       <p style="font-family:'Archivo',sans-serif;font-weight:700;font-size:clamp(17px,1.8vw,20px);color:#ffffff;margin:0 0 24px;">Ready to build this for your business?</p>
@@ -520,7 +523,17 @@
 <script type="text/x-dc" data-dc-script>
 
 class Component extends DCLogic {
-  state = { visible: {}, heroStage: 0, formSubmitted: false };
+  state = { visible: {}, heroStage: 0, formSubmitted: false, videoPlaying: false };
+
+  onVideoPlay = () => this.setState({ videoPlaying: true });
+  onVideoPause = () => this.setState({ videoPlaying: false });
+
+  videoRef = (el) => { this._video = el; };
+  togglePlayback = () => {
+    if (!this._video) return;
+    if (this._video.paused) this._video.play();
+    else this._video.pause();
+  };
 
   handleSubmit = (e) => {
     e.preventDefault();
@@ -578,6 +591,11 @@ class Component extends DCLogic {
     return {
       howProgressPct,
       sectionRef: this.sectionRef,
+      onVideoPlay: this.onVideoPlay,
+      onVideoPause: this.onVideoPause,
+      videoRef: this.videoRef,
+      togglePlayback: this.togglePlayback,
+      videoPlaying: this.state.videoPlaying,
       reveal,
       formSubmitted: this.state.formSubmitted,
       formNotSubmitted: !this.state.formSubmitted,
