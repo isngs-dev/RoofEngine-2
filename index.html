@@ -463,25 +463,25 @@
           <form onSubmit="{{ handleSubmit }}" style="background:#f7f6f3;border:1px solid rgba(11,18,38,0.08);border-radius:18px;padding:36px 32px;display:flex;flex-direction:column;gap:18px;">
             <div style="display:flex;flex-direction:column;gap:6px;">
               <label style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:rgba(11,18,38,0.6);">Name</label>
-              <input type="text" required="{{ true }}" placeholder="Enter your name" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;" />
+              <input type="text" name="name" required="{{ true }}" placeholder="Enter your name" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;" />
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;">
               <label style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:rgba(11,18,38,0.6);">Company Name</label>
-              <input type="text" required="{{ true }}" placeholder="Enter your company name" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;" />
+              <input type="text" name="company" required="{{ true }}" placeholder="Enter your company name" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;" />
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:18px;">
               <div style="flex:1 1 180px;display:flex;flex-direction:column;gap:6px;">
                 <label style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:rgba(11,18,38,0.6);">Email</label>
-                <input type="email" required="{{ true }}" placeholder="Enter your email" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;" />
+                <input type="email" name="email" required="{{ true }}" placeholder="Enter your email" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;" />
               </div>
               <div style="flex:1 1 180px;display:flex;flex-direction:column;gap:6px;">
                 <label style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:rgba(11,18,38,0.6);">Phone Number</label>
-                <input type="tel" required="{{ true }}" placeholder="Enter your phone number" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;" />
+                <input type="tel" name="phone" required="{{ true }}" placeholder="Enter your phone number" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;" />
               </div>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;">
               <label style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:rgba(11,18,38,0.6);">Required Service</label>
-              <select required="{{ true }}" defaultValue="" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;">
+              <select name="service" required="{{ true }}" defaultValue="" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;">
                 <option value="" disabled="{{ true }}">Select a service</option>
                 <option value="repair">Roof Repair</option>
                 <option value="replacement">Roof Replacement</option>
@@ -493,9 +493,12 @@
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;">
               <label style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:rgba(11,18,38,0.6);">Message</label>
-              <textarea rows="3" placeholder="Tell us about your business or what you're looking for" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;resize:vertical;"></textarea>
+              <textarea name="message" rows="3" placeholder="Tell us about your business or what you're looking for" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;resize:vertical;"></textarea>
             </div>
-            <button type="submit" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:16px 24px;background:#0b1226;color:#ffffff;font-family:'Archivo',sans-serif;font-weight:700;font-size:15.5px;border-radius:9px;border:none;cursor:pointer;margin-top:6px;">Build My Roof Engine <span style="color:#e8802a;">→</span></button>
+            <sc-if value="{{ formError }}">
+              <div style="font-size:13.5px;color:#c0392b;">{{ formError }}</div>
+            </sc-if>
+            <button type="submit" disabled="{{ formSubmitting }}" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:16px 24px;background:#0b1226;color:#ffffff;font-family:'Archivo',sans-serif;font-weight:700;font-size:15.5px;border-radius:9px;border:none;cursor:pointer;margin-top:6px;opacity:{{ submitButtonOpacity }};">{{ submitButtonLabel }} <span style="color:#e8802a;">→</span></button>
           </form>
         </sc-if>
       </div>
@@ -523,7 +526,7 @@
 <script type="text/x-dc" data-dc-script>
 
 class Component extends DCLogic {
-  state = { visible: {}, heroStage: 0, formSubmitted: false, videoPlaying: false };
+  state = { visible: {}, heroStage: 0, formSubmitted: false, formSubmitting: false, formError: null, videoPlaying: false };
 
   onVideoPlay = () => this.setState({ videoPlaying: true });
   onVideoPause = () => this.setState({ videoPlaying: false });
@@ -535,9 +538,21 @@ class Component extends DCLogic {
     else this._video.pause();
   };
 
-  handleSubmit = (e) => {
+  handleSubmit = async (e) => {
     e.preventDefault();
-    this.setState({ formSubmitted: true });
+    const data = Object.fromEntries(new FormData(e.target).entries());
+    this.setState({ formSubmitting: true, formError: null });
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Request failed');
+      this.setState({ formSubmitted: true, formSubmitting: false });
+    } catch (err) {
+      this.setState({ formSubmitting: false, formError: 'Something went wrong. Please try again or call us directly.' });
+    }
   };
 
   componentDidMount() {
@@ -599,6 +614,10 @@ class Component extends DCLogic {
       reveal,
       formSubmitted: this.state.formSubmitted,
       formNotSubmitted: !this.state.formSubmitted,
+      formSubmitting: this.state.formSubmitting,
+      formError: this.state.formError,
+      submitButtonLabel: this.state.formSubmitting ? 'Sending…' : 'Build My Roof Engine',
+      submitButtonOpacity: this.state.formSubmitting ? 0.6 : 1,
       handleSubmit: this.handleSubmit,
       heroTile0Bg: stage >= 0 ? tileActive : tileIdle,
       heroTile0Border: stage >= 0 ? tileActiveBorder : tileIdleBorder,

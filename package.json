@@ -1,0 +1,12 @@
+{
+  "name": "roof-engine-site",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.3",
+    "express": "^4.19.2"
+  }
+}
