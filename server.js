@@ -7,7 +7,7 @@ app.use(express.static(__dirname));
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
 
-const ADMIN_EMAIL = 'admin-paid@isngs.com';
+const ADMIN_EMAIL = 'paid@isngs.com';
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL;
 
 const SERVICE_LABELS = {
