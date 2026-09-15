@@ -11,11 +11,11 @@ const ADMIN_EMAIL = 'admin-paid@isngs.com';
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL;
 
 const SERVICE_LABELS = {
-  repair: 'Roof Repair',
-  replacement: 'Roof Replacement',
-  inspection: 'Roof Inspection',
-  storm: 'Storm Damage',
-  new: 'New Construction',
+  google_ads: 'Google Ads (PPC)',
+  meta_ads: 'Meta Ads',
+  seo: 'Search Engine Marketing (SEO)',
+  smm: 'Social Media Marketing (SMM)',
+  website_dev: 'Website Development',
   other: 'Other',
 };
 
