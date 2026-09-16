@@ -31,9 +31,9 @@
 <div style="font-family:'IBM Plex Sans',sans-serif;background:#ffffff;overflow-x:hidden;">
 
   <nav style="position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px clamp(20px,5vw,56px);background:rgba(10,18,36,0.82);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,0.08);">
-    <div style="background:#ffffff;border-radius:10px;padding:6px 14px;display:inline-flex;align-items:center;">
+    <a href="#" style="background:#ffffff;border-radius:10px;padding:6px 14px;display:inline-flex;align-items:center;">
       <img src="assets/roof-engine-logo-mark.png" alt="Roof Engine" style="height:48px;width:auto;display:block;" />
-    </div>
+    </a>
     <a href="#inquiry-form" style="display:inline-flex;align-items:center;gap:8px;padding:11px 20px;background:#ffffff;color:#0a1224;font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;border-radius:8px;white-space:nowrap;">Build My Roof Engine <span style="color:#e8802a;">→</span></a>
   </nav>
 
@@ -481,7 +481,7 @@
               </div>
               <div style="flex:1 1 180px;display:flex;flex-direction:column;gap:6px;">
                 <label style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:rgba(11,18,38,0.6);">Phone Number</label>
-                <input type="tel" name="phone" required="{{ true }}" placeholder="Enter your phone number" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;" />
+                <input type="tel" name="phone" value="{{ phone }}" oninput="{{ handlePhoneChange }}" required="{{ true }}" placeholder="(555) 123-4567" pattern="\(\d{3}\) \d{3}-\d{4}" title="Format: (555) 123-4567" maxlength="14" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;" />
               </div>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;">
@@ -586,10 +586,20 @@ class Component extends DCLogic {
     bookingTime: '',
     bookingError: null,
     callBooked: false,
+    phone: '',
   };
 
   onVideoPlay = () => this.setState({ videoPlaying: true });
   onVideoPause = () => this.setState({ videoPlaying: false });
+
+  handlePhoneChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+    let formatted = digits;
+    if (digits.length > 6) formatted = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    else if (digits.length > 3) formatted = `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    else if (digits.length > 0) formatted = `(${digits}`;
+    this.setState({ phone: formatted });
+  };
 
   videoRef = (el) => { this._video = el; };
   togglePlayback = () => {
@@ -703,6 +713,8 @@ class Component extends DCLogic {
     return {
       howProgressPct,
       sectionRef: this.sectionRef,
+      phone: this.state.phone,
+      handlePhoneChange: this.handlePhoneChange,
       onVideoPlay: this.onVideoPlay,
       onVideoPause: this.onVideoPause,
       videoRef: this.videoRef,

@@ -1,6 +1,7 @@
 const { google } = require('googleapis');
 const crypto = require('crypto');
 
+const ORGANIZER_EMAIL = 'kaustubh.b1@isngs.com';
 const ORGANIZER_GUEST = 'ahad.m@isngs.com';
 
 function getOAuthClient() {
@@ -25,7 +26,11 @@ async function createMeetEvent({ summary, description, startISO, endISO, timeZon
       description,
       start: { dateTime: startISO, timeZone },
       end: { dateTime: endISO, timeZone },
-      attendees: [{ email: guestEmail }, { email: ORGANIZER_GUEST }],
+      attendees: [
+        { email: guestEmail },
+        { email: ORGANIZER_GUEST },
+        { email: ORGANIZER_EMAIL, responseStatus: 'accepted' },
+      ],
       conferenceData: {
         createRequest: {
           requestId: crypto.randomUUID(),
