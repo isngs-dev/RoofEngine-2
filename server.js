@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const sgMail = require('@sendgrid/mail');
 const { createMeetEvent } = require('./calendar');
+const { saveInquiry } = require('./supabase');
 
 const app = express();
 app.use(express.json());
@@ -50,6 +51,8 @@ app.post('/api/contact', async (req, res) => {
       return res.status(502).json({ error: 'Could not book the call. Please try again or choose email only.' });
     }
   }
+
+  await saveInquiry({ name, company, email, phone, service, message, meetLink, booking });
 
   const adminEmail = {
     to: ADMIN_EMAIL,
