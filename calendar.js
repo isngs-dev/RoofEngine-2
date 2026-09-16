@@ -27,7 +27,7 @@ async function createMeetEvent({ summary, description, startISO, endISO, timeZon
       start: { dateTime: startISO, timeZone },
       end: { dateTime: endISO, timeZone },
       attendees: [
-        { email: guestEmail },
+        { email: guestEmail, responseStatus: 'accepted' },
         { email: ORGANIZER_GUEST },
         { email: ORGANIZER_EMAIL, responseStatus: 'accepted' },
       ],
