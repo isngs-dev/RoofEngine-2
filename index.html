@@ -456,16 +456,6 @@
       </div>
 
       <div style="flex:1 1 420px;min-width:300px;">
-        <sc-if value="{{ formSubmitted }}" hint-placeholder-val="{{ false }}">
-          <div style="background:#f7f6f3;border:1px solid rgba(11,18,38,0.08);border-radius:18px;padding:56px 40px;text-align:center;">
-            <div style="width:52px;height:52px;border-radius:50%;background:#0b1226;display:flex;align-items:center;justify-content:center;margin:0 auto 22px;">
-              <div style="width:16px;height:10px;border-left:2.5px solid #e8802a;border-bottom:2.5px solid #e8802a;transform:rotate(-45deg) translate(1px,-2px);"></div>
-            </div>
-            <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:19px;color:#0b1226;margin-bottom:10px;">Thanks — we've got it.</div>
-            <div style="font-size:14.5px;line-height:1.6;color:rgba(11,18,38,0.6);max-width:340px;margin:0 auto;">We'll be in touch shortly to show you what Roof Engine could look like for your business.</div>
-          </div>
-        </sc-if>
-        <sc-if value="{{ formNotSubmitted }}" hint-placeholder-val="{{ true }}">
           <form onSubmit="{{ handleSubmit }}" style="background:#f7f6f3;border:1px solid rgba(11,18,38,0.08);border-radius:18px;padding:36px 32px;display:flex;flex-direction:column;gap:18px;">
             <div style="display:flex;flex-direction:column;gap:6px;">
               <label style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:rgba(11,18,38,0.6);">Name</label>
@@ -503,7 +493,6 @@
             </div>
             <button type="submit" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:16px 24px;background:#0b1226;color:#ffffff;font-family:'Archivo',sans-serif;font-weight:700;font-size:15.5px;border-radius:9px;border:none;cursor:pointer;margin-top:6px;">Build My Roof Engine <span style="color:#e8802a;">→</span></button>
           </form>
-        </sc-if>
       </div>
     </div>
   </section>
@@ -580,7 +569,6 @@ class Component extends DCLogic {
   state = {
     visible: {},
     heroStage: 0,
-    formSubmitted: false,
     videoPlaying: false,
     bookingModalPhase: null, // null | 'choose' | 'submitting' | 'thanks'
     bookingDate: '',
@@ -611,8 +599,14 @@ class Component extends DCLogic {
 
   handleSubmit = (e) => {
     e.preventDefault();
+    this._form = e.target;
     this._pendingFormData = Object.fromEntries(new FormData(e.target).entries());
     this.setState({ bookingModalPhase: 'choose', bookingDate: '', bookingTime: '', bookingError: null });
+  };
+
+  resetForm = () => {
+    if (this._form) this._form.reset();
+    this.setState({ phone: '' });
   };
 
   setBookingDate = (e) => this.setState({ bookingDate: e.target.value });
@@ -634,7 +628,8 @@ class Component extends DCLogic {
     this.setState({ bookingModalPhase: 'submitting', bookingError: null });
     try {
       await this.submitContact(null);
-      this.setState({ bookingModalPhase: 'thanks', callBooked: false, formSubmitted: true });
+      this.resetForm();
+      this.setState({ bookingModalPhase: 'thanks', callBooked: false });
     } catch (err) {
       this.setState({ bookingModalPhase: 'choose', bookingError: err.message });
     }
@@ -652,7 +647,8 @@ class Component extends DCLogic {
         time: this.state.bookingTime,
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
-      this.setState({ bookingModalPhase: 'thanks', callBooked: true, formSubmitted: true });
+      this.resetForm();
+      this.setState({ bookingModalPhase: 'thanks', callBooked: true });
     } catch (err) {
       this.setState({ bookingModalPhase: 'choose', bookingError: err.message });
     }
@@ -722,8 +718,6 @@ class Component extends DCLogic {
       togglePlayback: this.togglePlayback,
       videoPlaying: this.state.videoPlaying,
       reveal,
-      formSubmitted: this.state.formSubmitted,
-      formNotSubmitted: !this.state.formSubmitted,
       handleSubmit: this.handleSubmit,
       bookingModalPhase: this.state.bookingModalPhase,
       bookingChoosing: this.state.bookingModalPhase === 'choose',
