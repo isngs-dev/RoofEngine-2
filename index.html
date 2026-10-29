@@ -26,18 +26,30 @@
     @keyframes sc-spin { to { transform: rotate(360deg); } }
     @keyframes sc-circle-draw { to { stroke-dashoffset: 0; } }
     @keyframes sc-check-draw { to { stroke-dashoffset: 0; } }
+    .nav-logos { padding: 6px 14px; gap: 14px; }
+    .nav-logo-re { height: 48px; }
+    .nav-logo-isn { height: 28px; }
+    .nav-divider { height: 34px; }
+    .nav-cta { padding: 11px 20px; font-size: 14px; }
+    @media (max-width: 560px) {
+      .nav-logos { padding: 5px 8px; gap: 8px; }
+      .nav-logo-re { height: 30px; }
+      .nav-logo-isn { height: 18px; }
+      .nav-divider { height: 24px; }
+      .nav-cta { padding: 9px 12px; font-size: 12px; }
+    }
   </style>
 </helmet>
 
 <div style="font-family:'IBM Plex Sans',sans-serif;background:#ffffff;overflow-x:hidden;">
 
-  <nav style="position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px clamp(20px,5vw,56px);background:rgba(10,18,36,0.82);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,0.08);">
-    <a href="#" style="background:#ffffff;border-radius:10px;padding:6px 14px;display:inline-flex;align-items:center;gap:14px;">
-      <img src="assets/roof-engine-logo-mark.png" alt="Roof Engine" style="height:48px;width:auto;display:block;" />
-      <span style="width:1px;height:34px;background:rgba(11,18,38,0.2);"></span>
-      <img src="assets/isn-logo.png" alt="iSN Business Solutions" style="height:28px;width:auto;display:block;" />
-    </a>
-    <a href="#inquiry-form" style="display:inline-flex;align-items:center;gap:8px;padding:11px 20px;background:#ffffff;color:#0a1224;font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;border-radius:8px;white-space:nowrap;">Build My Roof Engine <span style="color:#e8802a;">→</span></a>
+  <nav style="position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px clamp(16px,5vw,56px);background:rgba(10,18,36,0.82);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,0.08);">
+    <div class="nav-logos" style="background:#ffffff;border-radius:10px;display:inline-flex;align-items:center;">
+      <a href="#"><img class="nav-logo-re" src="assets/roof-engine-logo-mark.png" alt="Roof Engine" style="width:auto;display:block;" /></a>
+      <span class="nav-divider" style="width:1px;background:rgba(11,18,38,0.2);"></span>
+      <a href="https://isngs.com/" target="_blank" rel="noopener"><img class="nav-logo-isn" src="assets/isn-logo.png" alt="iSN Business Solutions" style="width:auto;display:block;" /></a>
+    </div>
+    <a href="#inquiry-form" class="nav-cta" style="display:inline-flex;align-items:center;gap:8px;background:#ffffff;color:#0a1224;font-family:'Archivo',sans-serif;font-weight:700;border-radius:8px;white-space:nowrap;">Build My Roof Engine <span style="color:#e8802a;">→</span></a>
   </nav>
 
   <section data-key="hero" ref="{{ sectionRef }}" style="background:#0a1224;padding:clamp(95px,10vw,120px) clamp(24px,6vw,72px) clamp(90px,10vw,120px);position:relative;">
@@ -554,7 +566,7 @@
     <div style="display:flex;align-items:center;gap:14px;">
       <img src="assets/roof-engine-logo-mark.png" alt="Roof Engine" style="height:30px;width:auto;" />
       <span style="width:1px;height:24px;background:rgba(11,18,38,0.2);"></span>
-      <img src="assets/isn-logo.png" alt="iSN Business Solutions" style="height:20px;width:auto;" />
+      <a href="https://isngs.com/" target="_blank" rel="noopener"><img src="assets/isn-logo.png" alt="iSN Business Solutions" style="height:20px;width:auto;display:block;" /></a>
     </div>
     <div style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:rgba(11,18,38,0.5);">
       <span>Powered by iSN Business Solutions.</span>
