@@ -1,50 +1,49 @@
 # Supabase → Google Sheets sync
 
-Every new row in `public.inquiries` (one per form submission, with the Meet link when a call was booked) is pushed by a Supabase Database Webhook to an Apps Script attached to the sheet, which appends it.
+An Apps Script attached to the sheet checks Supabase every minute and appends any new rows from `public.inquiries` (one per form submission, with the Meet link when a call was booked).
+
+It pulls instead of Supabase pushing because the isngs.com Workspace doesn't allow public Apps Script web apps, so a Supabase webhook gets `401`.
 
 Sheet: https://docs.google.com/spreadsheets/d/1pY7U-EZQRriNm5LZi2clVmcNfl4NzfdV_lyfknKlRmQ/edit
 
-## 1. Apps Script (in the sheet)
+## 1. Supabase (SQL Editor)
 
-1. Open the sheet → **Extensions → Apps Script**.
-2. Replace `Code.gs` with the contents of [`sheets-sync.gs`](sheets-sync.gs) and save.
-3. **Project Settings → Script Properties → Add**: `SYNC_TOKEN` = a long random string (e.g. run `node -e "console.log(crypto.randomUUID())"`).
-4. **Deploy → New deployment → Web app**: Execute as **Me**, Who has access **Anyone**. Authorize, then copy the web app URL (`https://script.google.com/macros/s/…/exec`).
-
-## 2. Supabase webhook
-
-Supabase Dashboard → **Integrations** (main left sidebar, not under Database) → **Database Webhooks** → enable it if asked → **Webhooks → Create a new hook**:
-
-- Table: `inquiries`, Events: **Insert**
-- Type: **HTTP Request**, Method: **POST**
-- URL: the web app URL
-- HTTP Parameters: `token` = the same `SYNC_TOKEN`
-
-Or, without the UI, run this in **SQL Editor** (replace the URL and token):
+Pick a new random token (e.g. `node -e "console.log(crypto.randomUUID())"`), put it in place of `PASTE_SYNC_TOKEN`, and run:
 
 ```sql
-create extension if not exists pg_net;
+-- The old push webhook can't reach Apps Script; remove it.
+drop trigger if exists roofengine on public.inquiries;
 
-create or replace function public.push_inquiry_to_sheet() returns trigger
-language plpgsql security definer set search_path = public as $$
-begin
-  perform net.http_post(
-    url := 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?token=YOUR_SYNC_TOKEN',
-    body := jsonb_build_object('type', 'INSERT', 'table', 'inquiries', 'schema', 'public', 'record', to_jsonb(new)),
-    headers := '{"Content-Type": "application/json"}'::jsonb
-  );
-  return new;
-end $$;
+-- Lets the sheet read inquiries with the public anon key, but only with the token.
+create or replace function public.inquiries_for_sheet(p_token text, p_since timestamptz)
+returns setof public.inquiries
+language sql stable security definer set search_path = public
+as $$
+  select * from public.inquiries
+  where p_token = 'PASTE_SYNC_TOKEN' and created_at > p_since
+  order by created_at
+  limit 500;
+$$;
 
-create trigger inquiries_to_sheet
-  after insert on public.inquiries
-  for each row execute function public.push_inquiry_to_sheet();
+revoke execute on function public.inquiries_for_sheet(text, timestamptz) from public;
+grant execute on function public.inquiries_for_sheet(text, timestamptz) to anon;
 ```
+
+## 2. Apps Script (in the sheet)
+
+1. Open the sheet → **Extensions → Apps Script**, replace the code with [`sheets-sync.gs`](sheets-sync.gs), save.
+2. **Project Settings → Script Properties**, set:
+   - `SUPABASE_URL` — Supabase **Project Settings → Data API** (e.g. `https://xxxx.supabase.co`)
+   - `SUPABASE_ANON_KEY` — Supabase **Project Settings → API Keys**: the *publishable* / *anon* key (never the service role key)
+   - `SYNC_TOKEN` — the same token as in the SQL
+   - delete `LAST_CREATED_AT` if it exists
+3. Clear the sheet's test rows (keep or delete the header row — it's re-added if the sheet is empty).
+4. Pick **setup** in the function dropdown → **Run** → approve the permissions. It copies every existing inquiry and installs a trigger that runs `syncInquiries` every minute.
+
+The web app deployment isn't used any more; you can archive it under **Deploy → Manage deployments**.
 
 ## 3. Check
 
-Submit the form once. A row appears in the first tab (headers are added automatically if it's empty). The webhook log in Supabase may show a `302` — that's Apps Script's normal redirect; the row is still written.
+**Executions** shows `syncInquiries` every minute with "New inquiries: N" in its log. A new form submission shows up in the sheet within about a minute.
 
-Rows created before the webhook existed aren't copied. To backfill, export `inquiries` as CSV from the Supabase Table Editor and paste it in.
-
-If you change the script later, use **Deploy → Manage deployments → Edit → New version** so the URL stays the same.
+To copy everything again from scratch: clear the sheet, delete the `LAST_CREATED_AT` property, run `syncInquiries`.
