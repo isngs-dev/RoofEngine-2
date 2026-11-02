@@ -71,8 +71,6 @@ height="0" width="0" style="display:none;visibility:hidden">
     @keyframes pulseDot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.75); } }
     @keyframes typeBounce { 0%,80%,100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-4px); opacity: 1; } }
     @keyframes sc-spin { to { transform: rotate(360deg); } }
-    @keyframes sc-circle-draw { to { stroke-dashoffset: 0; } }
-    @keyframes sc-check-draw { to { stroke-dashoffset: 0; } }
     .nav-logos { padding: 6px 14px; gap: 14px; }
     .nav-logo-re { height: 48px; }
     .nav-logo-isn { height: 28px; }
@@ -593,18 +591,6 @@ height="0" width="0" style="display:none;visibility:hidden">
           </div>
         </sc-if>
 
-        <sc-if value="{{ bookingThanks }}">
-          <div style="text-align:center;padding:10px 0;">
-            <svg width="64" height="64" viewBox="0 0 64 64" style="margin:0 auto 18px;display:block;">
-              <circle cx="32" cy="32" r="29" fill="none" stroke="#0b1226" stroke-width="3" stroke-dasharray="182" stroke-dashoffset="182" style="animation:sc-circle-draw .5s ease forwards;" />
-              <path d="M18 33 L28 43 L47 21" fill="none" stroke="#e8802a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="42" stroke-dashoffset="42" style="animation:sc-check-draw .35s ease forwards .5s;" />
-            </svg>
-            <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:19px;color:#0b1226;margin-bottom:10px;">{{ thanksTitle }}</div>
-            <div style="font-size:14.5px;line-height:1.6;color:rgba(11,18,38,0.6);max-width:340px;margin:0 auto 22px;">{{ thanksBody }}</div>
-            <button onclick="{{ closeBookingModal }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 26px;background:#0b1226;color:#ffffff;font-family:'Archivo',sans-serif;font-weight:700;font-size:14.5px;border-radius:9px;border:none;cursor:pointer;">Close</button>
-          </div>
-        </sc-if>
-
       </div>
     </div>
   </sc-if>
@@ -634,11 +620,10 @@ class Component extends DCLogic {
     visible: {},
     heroStage: 0,
     videoPlaying: false,
-    bookingModalPhase: null, // null | 'choose' | 'submitting' | 'thanks'
+    bookingModalPhase: null, // null | 'choose' | 'submitting'
     bookingDate: '',
     bookingTime: '',
     bookingError: null,
-    callBooked: false,
     phone: '',
   };
 
@@ -668,9 +653,11 @@ class Component extends DCLogic {
     this.setState({ bookingModalPhase: 'choose', bookingDate: '', bookingTime: '', bookingError: null });
   };
 
-  resetForm = () => {
+  // Clears the form and modal first so Back from the thank-you page doesn't restore them.
+  goToThankYou = (booked) => {
     if (this._form) this._form.reset();
-    this.setState({ phone: '' });
+    this.setState({ phone: '', bookingModalPhase: null });
+    window.location.href = booked ? 'thank-you.html?booked=1' : 'thank-you.html';
   };
 
   setBookingDate = (e) => this.setState({ bookingDate: e.target.value });
@@ -692,8 +679,7 @@ class Component extends DCLogic {
     this.setState({ bookingModalPhase: 'submitting', bookingError: null });
     try {
       await this.submitContact(null);
-      this.resetForm();
-      this.setState({ bookingModalPhase: 'thanks', callBooked: false });
+      this.goToThankYou(false);
     } catch (err) {
       this.setState({ bookingModalPhase: 'choose', bookingError: err.message });
     }
@@ -711,8 +697,7 @@ class Component extends DCLogic {
         time: this.state.bookingTime,
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
-      this.resetForm();
-      this.setState({ bookingModalPhase: 'thanks', callBooked: true });
+      this.goToThankYou(true);
     } catch (err) {
       this.setState({ bookingModalPhase: 'choose', bookingError: err.message });
     }
@@ -786,15 +771,9 @@ class Component extends DCLogic {
       bookingModalPhase: this.state.bookingModalPhase,
       bookingChoosing: this.state.bookingModalPhase === 'choose',
       bookingSubmitting: this.state.bookingModalPhase === 'submitting',
-      bookingThanks: this.state.bookingModalPhase === 'thanks',
       bookingDate: this.state.bookingDate,
       bookingTime: this.state.bookingTime,
       bookingError: this.state.bookingError,
-      callBooked: this.state.callBooked,
-      thanksTitle: this.state.callBooked ? 'Call booked!' : "Thanks — we've got it.",
-      thanksBody: this.state.callBooked
-        ? "Check your inbox for the calendar invite with the Google Meet link."
-        : "We'll be in touch shortly to show you what Roof Engine could look like for your business.",
       todayISO,
       setBookingDate: this.setBookingDate,
       setBookingTime: this.setBookingTime,
