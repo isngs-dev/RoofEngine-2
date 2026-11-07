@@ -567,14 +567,16 @@ height="0" width="0" style="display:none;visibility:hidden">
         <sc-if value="{{ bookingChoosing }}">
           <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:20px;color:#0b1226;margin:0 0 8px;padding-right:24px;">Want to lock in a quick call?</div>
           <div style="font-size:14px;line-height:1.55;color:rgba(11,18,38,0.6);margin-bottom:22px;">Pick a time that works and we'll send a Google Meet invite — or skip straight to email.</div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
-            <div style="flex:1 1 160px;display:flex;flex-direction:column;gap:6px;">
-              <label style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:rgba(11,18,38,0.6);">Date</label>
-              <input type="date" value="{{ bookingDate }}" onchange="{{ setBookingDate }}" min="{{ todayISO }}" style="padding:12px 14px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;" />
-            </div>
-            <div style="flex:1 1 140px;display:flex;flex-direction:column;gap:6px;">
-              <label style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:rgba(11,18,38,0.6);">Time</label>
-              <input type="time" value="{{ bookingTime }}" onchange="{{ setBookingTime }}" style="padding:12px 14px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;" />
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+            <label style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:rgba(11,18,38,0.6);">Date (Mon–Fri)</label>
+            <input type="date" value="{{ bookingDate }}" onchange="{{ setBookingDate }}" min="{{ todayISO }}" style="padding:12px 14px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+            <label style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:rgba(11,18,38,0.6);">Time (Eastern Time)</label>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;max-height:220px;overflow-y:auto;">
+              <sc-for list="{{ timeSlots }}" as="slot">
+                <button type="button" onclick="{{ slot.pick }}" aria-pressed="{{ slot.selected }}" style="{{ slot.style }}">{{ slot.label }}</button>
+              </sc-for>
             </div>
           </div>
           <sc-if value="{{ bookingError }}">
@@ -614,6 +616,10 @@ height="0" width="0" style="display:none;visibility:hidden">
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
+
+// Bookable call times, Eastern Time (24h). Keep in sync with BOOKING_SLOTS in server.js.
+const BOOKING_SLOTS = ['07:00', '07:30', '08:30', '09:00', '09:30', '10:30', '11:00', '11:30',
+  '12:00', '12:30', '14:00', '14:30', '15:00', '15:30'];
 
 class Component extends DCLogic {
   state = {
@@ -660,8 +666,7 @@ class Component extends DCLogic {
     window.location.href = booked ? 'thank-you.html?booked=1' : 'thank-you.html';
   };
 
-  setBookingDate = (e) => this.setState({ bookingDate: e.target.value });
-  setBookingTime = (e) => this.setState({ bookingTime: e.target.value });
+  setBookingDate = (e) => this.setState({ bookingDate: e.target.value, bookingError: null });
 
   submitContact = async (booking) => {
     const res = await fetch('/api/contact', {
@@ -686,17 +691,24 @@ class Component extends DCLogic {
   };
 
   confirmBooking = async () => {
-    if (!this.state.bookingDate || !this.state.bookingTime) {
+    const { bookingDate, bookingTime } = this.state;
+    if (!bookingDate || !bookingTime) {
       this.setState({ bookingError: 'Please choose a date and time.' });
+      return;
+    }
+    const day = new Date(bookingDate + 'T12:00:00').getDay();
+    if (day === 0 || day === 6) {
+      this.setState({ bookingError: 'Calls are available Monday to Friday.' });
+      return;
+    }
+    const nowET = new Date().toLocaleString('sv-SE', { timeZone: 'America/New_York' }).slice(0, 16);
+    if (`${bookingDate} ${bookingTime}` <= nowET) {
+      this.setState({ bookingError: 'That time has already passed. Please choose a later one.' });
       return;
     }
     this.setState({ bookingModalPhase: 'submitting', bookingError: null });
     try {
-      await this.submitContact({
-        date: this.state.bookingDate,
-        time: this.state.bookingTime,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      });
+      await this.submitContact({ date: bookingDate, time: bookingTime, timeZone: 'America/New_York' });
       this.goToThankYou(true);
     } catch (err) {
       this.setState({ bookingModalPhase: 'choose', bookingError: err.message });
@@ -753,8 +765,21 @@ class Component extends DCLogic {
     const howCount = ['how_0','how_1','how_2','how_3','how_4','how_5'].filter((k) => v[k]).length;
     const howProgressPct = Math.round((howCount / 6) * 100) + '%';
 
-    const today = new Date();
-    const todayISO = today.toISOString().slice(0, 10);
+    const todayISO = new Date().toLocaleString('sv-SE', { timeZone: 'America/New_York' }).slice(0, 10);
+
+    const slotBase = 'padding:11px 6px;border-radius:999px;font-family:\'IBM Plex Sans\',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;';
+    const timeSlots = BOOKING_SLOTS.map((t) => {
+      const [h, m] = t.split(':').map(Number);
+      const selected = this.state.bookingTime === t;
+      return {
+        label: `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`,
+        selected,
+        style: slotBase + (selected
+          ? 'background:#0b1226;color:#ffffff;border:1px solid #0b1226;'
+          : 'background:#ffffff;color:#0b1226;border:1px solid rgba(11,18,38,0.15);'),
+        pick: () => this.setState({ bookingTime: t, bookingError: null }),
+      };
+    });
 
     return {
       howProgressPct,
@@ -775,8 +800,8 @@ class Component extends DCLogic {
       bookingTime: this.state.bookingTime,
       bookingError: this.state.bookingError,
       todayISO,
+      timeSlots,
       setBookingDate: this.setBookingDate,
-      setBookingTime: this.setBookingTime,
       skipBooking: this.skipBooking,
       confirmBooking: this.confirmBooking,
       closeBookingModal: this.closeBookingModal,

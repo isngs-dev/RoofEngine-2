@@ -22,6 +22,10 @@ const SERVICE_LABELS = {
   other: 'Other',
 };
 
+// Bookable call times, Eastern Time (24h). Keep in sync with BOOKING_SLOTS in index.html.
+const BOOKING_SLOTS = ['07:00', '07:30', '08:30', '09:00', '09:30', '10:30', '11:00', '11:30',
+  '12:00', '12:30', '14:00', '14:30', '15:00', '15:30'];
+
 app.post('/api/contact', async (req, res) => {
   const { name, company, email, phone, service, message, booking } = req.body || {};
   if (!name || !company || !email || !phone || !service) {
@@ -33,19 +37,25 @@ app.post('/api/contact', async (req, res) => {
   let meetLink = null;
   let scheduledLabel = null;
   if (booking && booking.date && booking.time) {
+    const day = new Date(`${booking.date}T12:00:00Z`).getUTCDay();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(booking.date) || !BOOKING_SLOTS.includes(booking.time) || day === 0 || day === 6) {
+      return res.status(400).json({ error: 'Please choose an available weekday and time.' });
+    }
+    booking.timeZone = 'America/New_York';
     try {
-      const start = new Date(`${booking.date}T${booking.time}:00`);
-      const end = new Date(start.getTime() + 30 * 60000);
-      const timeZone = booking.timeZone || 'UTC';
+      // Local times plus timeZone, so Google places the call in Eastern Time whatever the server's zone.
+      const [h, m] = booking.time.split(':').map(Number);
+      const endMin = h * 60 + m + 30;
+      const endTime = `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
       meetLink = await createMeetEvent({
         summary: `Roof Engine call — ${name} (${company})`,
         description: `Service: ${serviceLabel}\nPhone: ${phone}\nMessage: ${message || '—'}`,
-        startISO: start.toISOString(),
-        endISO: end.toISOString(),
-        timeZone,
+        startISO: `${booking.date}T${booking.time}:00`,
+        endISO: `${booking.date}T${endTime}:00`,
+        timeZone: booking.timeZone,
         guestEmail: email,
       });
-      scheduledLabel = `${booking.date} at ${booking.time} (${timeZone})`;
+      scheduledLabel = `${booking.date} at ${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'} ET`;
     } catch (err) {
       console.error('Calendar error:', err.response ? err.response.data : err.message);
       return res.status(502).json({ error: 'Could not book the call. Please try again or choose email only.' });
