@@ -93,13 +93,29 @@ app.post('/api/contact', async (req, res) => {
     ].filter(Boolean).join('\n'),
   };
 
+  const firstName = String(name).trim().split(/\s+/)[0];
+  const intro = "Thank you for your interest in Roof Engine! We're glad to have caught your attention and look forward to showing you what's possible when your business has the right sales engine working behind it.";
   const userEmail = {
     to: email,
     from: FROM_EMAIL,
-    subject: meetLink ? 'Your Roof Engine call is booked' : 'We got your Roof Engine inquiry',
-    text: meetLink
-      ? `Hi ${name},\n\nYour call is booked for ${scheduledLabel}.\nJoin here: ${meetLink}\n\n— Roof Engine`
-      : `Hi ${name},\n\nThanks for reaching out about ${serviceLabel.toLowerCase()}. We'll be in touch shortly to show you what Roof Engine could look like for ${company}.\n\n— Roof Engine`,
+    subject: meetLink ? 'Your Roof Engine Call is Confirmed!' : "We've Received Your Roof Engine Inquiry!",
+    text: (meetLink
+      ? [
+        `Hi ${firstName},`,
+        intro,
+        "Your call with our Marketing Expert is confirmed, and we're excited to connect, learn more about your business, and explore how Roof Engine can help turn more homeowner inquiries into booked inspections.",
+        `Date & time: ${scheduledLabel}\nGoogle Meet: ${meetLink}`,
+        'Looking forward to speaking with you!',
+        'Best Regards,\nRebecca',
+      ]
+      : [
+        `Hi ${firstName},`,
+        intro,
+        `We've received your inquiry about ${serviceLabel}, and our Marketing Expert will be in touch shortly to learn more about ${company} and explore how Roof Engine can help turn more homeowner inquiries into booked inspections.`,
+        "Can't wait? Give us a call at (786) 823-3553.",
+        'Looking forward to speaking with you!',
+        'Best Regards,\nRebecca',
+      ]).join('\n\n'),
   };
 
   // By now the inquiry is saved and any call is booked (Google sends the invite itself), so an email
