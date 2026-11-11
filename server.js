@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const sgMail = require('@sendgrid/mail');
-const { createMeetEvent } = require('./calendar');
+const { createMeetEvent, getAvailability, upcomingWeekdays } = require('./calendar');
 const { sendGmail } = require('./gmail');
 const { saveInquiry } = require('./supabase');
 
@@ -26,9 +26,14 @@ const SERVICE_LABELS = {
   other: 'Other',
 };
 
-// Bookable call times, Eastern Time (24h). Keep in sync with BOOKING_SLOTS in index.html.
-const BOOKING_SLOTS = ['06:00', '06:30', '07:00', '07:30', '08:00', '08:30', '09:00', '09:30',
-  '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30'];
+app.get('/api/availability', async (req, res) => {
+  try {
+    res.json(await getAvailability());
+  } catch (err) {
+    console.error('Availability error:', err.response ? err.response.data : err.message);
+    res.status(502).json({ error: 'Could not load available times.' });
+  }
+});
 
 app.post('/api/contact', async (req, res) => {
   const { name, company, email, phone, service, message, booking } = req.body || {};
@@ -41,12 +46,15 @@ app.post('/api/contact', async (req, res) => {
   let meetLink = null;
   let scheduledLabel = null;
   if (booking && booking.date && booking.time) {
-    const day = new Date(`${booking.date}T12:00:00Z`).getUTCDay();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(booking.date) || !BOOKING_SLOTS.includes(booking.time) || day === 0 || day === 6) {
+    if (!upcomingWeekdays().includes(booking.date)) {
       return res.status(400).json({ error: 'Please choose an available weekday and time.' });
     }
     booking.timeZone = 'America/New_York';
     try {
+      // Checked again here so a slot taken since the visitor opened the picker can't be double-booked.
+      if (!(await getAvailability([booking.date]))[booking.date].includes(booking.time)) {
+        return res.status(409).json({ error: 'That time is no longer available. Please pick another.' });
+      }
       // Local times plus timeZone, so Google places the call in Eastern Time whatever the server's zone.
       const [h, m] = booking.time.split(':').map(Number);
       const endMin = h * 60 + m + 30;
