@@ -1,9 +1,9 @@
-// One-time local script to get a Google refresh token for the account that
-// should organize the booking calls (kaustubh.b1@isngs.com).
+// One-time local script to get a Google refresh token.
 //
 // Usage:
 //   Fill in GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env, then:
-//   npm run get-google-token
+//   npm run get-google-token            -> GOOGLE_REFRESH_TOKEN (kaustubh.b1@isngs.com, calendar)
+//   npm run get-google-token -- gmail   -> GMAIL_REFRESH_TOKEN (info@isngs.com, sending email)
 //
 // The Google Cloud OAuth client must have this exact redirect URI added:
 //   http://localhost:4321/oauth2callback
@@ -26,13 +26,18 @@ const oauth2Client = new google.auth.OAuth2(
   REDIRECT_URI
 );
 
+const target = process.argv[2] === 'gmail'
+  ? { account: 'info@isngs.com', envVar: 'GMAIL_REFRESH_TOKEN', scope: 'https://www.googleapis.com/auth/gmail.send' }
+  : { account: 'kaustubh.b1@isngs.com', envVar: 'GOOGLE_REFRESH_TOKEN', scope: 'https://www.googleapis.com/auth/calendar.events' };
+
 const authUrl = oauth2Client.generateAuthUrl({
   access_type: 'offline',
   prompt: 'consent',
-  scope: ['https://www.googleapis.com/auth/calendar.events'],
+  login_hint: target.account,
+  scope: [target.scope],
 });
 
-console.log('\n1. Open this URL and sign in as kaustubh.b1@isngs.com:\n');
+console.log(`\n1. Open this URL and sign in as ${target.account}:\n`);
 console.log(authUrl);
 console.log('\n2. Approve access. You will be redirected back here automatically.\n');
 
@@ -46,7 +51,7 @@ const server = http.createServer(async (req, res) => {
   server.close();
 
   const { tokens } = await oauth2Client.getToken(code);
-  console.log('Save this as the GOOGLE_REFRESH_TOKEN environment variable on Render:\n');
+  console.log(`Save this as the ${target.envVar} environment variable on Render:\n`);
   console.log(tokens.refresh_token);
 });
 

@@ -4,12 +4,12 @@ const crypto = require('crypto');
 const ORGANIZER_EMAIL = 'kaustubh.b1@isngs.com';
 const ORGANIZER_GUEST = 'ahad.m@isngs.com';
 
-function getOAuthClient() {
+function getOAuthClient(refreshToken = process.env.GOOGLE_REFRESH_TOKEN) {
   const client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
   );
-  client.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
+  client.setCredentials({ refresh_token: refreshToken });
   return client;
 }
 
@@ -42,4 +42,4 @@ async function createMeetEvent({ summary, description, startISO, endISO, timeZon
   return data.hangoutLink;
 }
 
-module.exports = { createMeetEvent };
+module.exports = { createMeetEvent, getOAuthClient };

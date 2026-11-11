@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const sgMail = require('@sendgrid/mail');
 const { createMeetEvent } = require('./calendar');
+const { sendGmail } = require('./gmail');
 const { saveInquiry } = require('./supabase');
 
 const app = express();
@@ -12,6 +13,9 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
 
 const ADMIN_EMAILS = ['paid@isngs.com', 'kaustubh.b1@isngs.com'];
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL;
+
+// Gmail keeps a copy in info@isngs.com's Sent folder; SendGrid is the fallback until GMAIL_REFRESH_TOKEN is set.
+const sendMail = process.env.GMAIL_REFRESH_TOKEN ? sendGmail : (msg) => sgMail.send(msg);
 
 const SERVICE_LABELS = {
   google_ads: 'Google Ads (PPC)',
@@ -91,10 +95,10 @@ app.post('/api/contact', async (req, res) => {
   };
 
   try {
-    await Promise.all([sgMail.send(adminEmail), sgMail.send(userEmail)]);
+    await Promise.all([sendMail(adminEmail), sendMail(userEmail)]);
     res.json({ ok: true, meetLink });
   } catch (err) {
-    console.error('SendGrid error:', err.response ? err.response.body : err.message);
+    console.error('Email error:', err.response ? err.response.body || err.response.data : err.message);
     res.status(502).json({ error: 'Failed to send email' });
   }
 });
