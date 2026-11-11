@@ -10,7 +10,7 @@ app.use(express.static(__dirname));
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
 
-const ADMIN_EMAIL = 'paid@isngs.com';
+const ADMIN_EMAILS = ['paid@isngs.com', 'kaustubh.b1@isngs.com'];
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL;
 
 const SERVICE_LABELS = {
@@ -23,8 +23,8 @@ const SERVICE_LABELS = {
 };
 
 // Bookable call times, Eastern Time (24h). Keep in sync with BOOKING_SLOTS in index.html.
-const BOOKING_SLOTS = ['07:00', '07:30', '08:30', '09:00', '09:30', '10:30', '11:00', '11:30',
-  '12:00', '12:30', '14:00', '14:30', '15:00', '15:30'];
+const BOOKING_SLOTS = ['06:00', '06:30', '07:00', '07:30', '08:00', '08:30', '09:00', '09:30',
+  '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30'];
 
 app.post('/api/contact', async (req, res) => {
   const { name, company, email, phone, service, message, booking } = req.body || {};
@@ -65,7 +65,7 @@ app.post('/api/contact', async (req, res) => {
   await saveInquiry({ name, company, email, phone, service, message, meetLink, booking });
 
   const adminEmail = {
-    to: ADMIN_EMAIL,
+    to: ADMIN_EMAILS,
     from: FROM_EMAIL,
     replyTo: email,
     subject: `New Roof Engine inquiry — ${name} (${company})`,
