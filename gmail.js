@@ -7,7 +7,7 @@ const encodeWord = (v) => `=?UTF-8?B?${Buffer.from(header(v)).toString('base64')
 
 function buildRaw({ to, from, replyTo, subject, text }) {
   const lines = [
-    `From: ${header(from)}`,
+    from ? `From: ${header(from)}` : null,
     `To: ${[].concat(to).map(header).join(', ')}`,
     replyTo ? `Reply-To: ${header(replyTo)}` : null,
     `Subject: ${encodeWord(subject)}`,
@@ -21,9 +21,10 @@ function buildRaw({ to, from, replyTo, subject, text }) {
 }
 
 // Sends as the account behind GMAIL_REFRESH_TOKEN (info@isngs.com), so Gmail keeps a copy in its Sent folder.
+// From is left out so Gmail fills in that account's own address (SENDGRID_FROM_EMAIL may differ).
 async function sendGmail(msg) {
   const gmail = google.gmail({ version: 'v1', auth: getOAuthClient(process.env.GMAIL_REFRESH_TOKEN) });
-  await gmail.users.messages.send({ userId: 'me', requestBody: { raw: buildRaw(msg) } });
+  await gmail.users.messages.send({ userId: 'me', requestBody: { raw: buildRaw({ ...msg, from: null }) } });
 }
 
 module.exports = { sendGmail, buildRaw };

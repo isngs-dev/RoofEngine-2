@@ -102,13 +102,14 @@ app.post('/api/contact', async (req, res) => {
       : `Hi ${name},\n\nThanks for reaching out about ${serviceLabel.toLowerCase()}. We'll be in touch shortly to show you what Roof Engine could look like for ${company}.\n\n— Roof Engine`,
   };
 
+  // By now the inquiry is saved and any call is booked (Google sends the invite itself), so an email
+  // failure is only logged: an error here made visitors retry and book the same call twice.
   try {
     await Promise.all([sendMail(adminEmail), sendMail(userEmail)]);
-    res.json({ ok: true, meetLink });
   } catch (err) {
     console.error('Email error:', err.response ? err.response.body || err.response.data : err.message);
-    res.status(502).json({ error: 'Failed to send email' });
   }
+  res.json({ ok: true, meetLink });
 });
 
 const PORT = process.env.PORT || 3000;
