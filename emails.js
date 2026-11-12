@@ -60,27 +60,27 @@ function layout({ preheader, body }) {
 </html>`;
 }
 
+const greeting = (firstName) => `<p style="margin:0 0 18px;font-family:${HEAD_FONT};font-size:22px;font-weight:800;color:#0b1226;">Hi ${esc(firstName)},</p>`;
+const signOff = `<p style="margin:8px 0 0;font-family:${FONT};font-size:16px;line-height:1.65;color:#3d4457;">Best Regards,<br><strong style="color:#0b1226;">Rebecca</strong></p>`;
+const meetText = (meetLink, scheduledLabel) => `Date & time: ${scheduledLabel}\nGoogle Meet: ${meetLink}`;
+const meetPanel = (meetLink, scheduledLabel) => panel(label('Date &amp; time')
+  + `<div style="font-family:${HEAD_FONT};font-size:18px;font-weight:700;color:#0b1226;margin:0 0 18px;">${esc(scheduledLabel)}</div>`
+  + button(meetLink, 'Join Google Meet &rarr;')
+  + `<div style="font-family:${FONT};font-size:13px;line-height:1.5;color:#7a7f8c;margin-top:14px;">Google Meet: <a href="${esc(meetLink)}" style="color:#e8802a;word-break:break-all;">${esc(meetLink)}</a></div>`, 'center');
+
 // Confirmation to the person who filled in the form. Wording is Rebecca's; keep text and html saying the same thing.
 function confirmationEmail({ firstName, company, serviceLabel, meetLink, scheduledLabel }) {
-  const greeting = `<p style="margin:0 0 18px;font-family:${HEAD_FONT};font-size:22px;font-weight:800;color:#0b1226;">Hi ${esc(firstName)},</p>`;
-  const signOff = `<p style="margin:8px 0 0;font-family:${FONT};font-size:16px;line-height:1.65;color:#3d4457;">Best Regards,<br><strong style="color:#0b1226;">Rebecca</strong></p>`;
-
   if (meetLink) {
     const confirmed = "Your call with our Marketing Expert is confirmed, and we're excited to connect, learn more about your business, and explore how Roof Engine can help turn more homeowner inquiries into booked inspections.";
     return {
       subject: 'Your Roof Engine Call is Confirmed!',
       text: [
-        `Hi ${firstName},`, INTRO, confirmed,
-        `Date & time: ${scheduledLabel}\nGoogle Meet: ${meetLink}`,
+        `Hi ${firstName},`, INTRO, confirmed, meetText(meetLink, scheduledLabel),
         'Looking forward to speaking with you!', 'Best Regards,\nRebecca',
       ].join('\n\n'),
       html: layout({
         preheader: `Your call is confirmed for ${scheduledLabel}.`,
-        body: greeting + p(esc(INTRO)) + p(esc(confirmed))
-          + panel(label('Date &amp; time')
-            + `<div style="font-family:${HEAD_FONT};font-size:18px;font-weight:700;color:#0b1226;margin:0 0 18px;">${esc(scheduledLabel)}</div>`
-            + button(meetLink, 'Join Google Meet &rarr;')
-            + `<div style="font-family:${FONT};font-size:13px;line-height:1.5;color:#7a7f8c;margin-top:14px;">Google Meet: <a href="${esc(meetLink)}" style="color:#e8802a;word-break:break-all;">${esc(meetLink)}</a></div>`, 'center')
+        body: greeting(firstName) + p(esc(INTRO)) + p(esc(confirmed)) + meetPanel(meetLink, scheduledLabel)
           + p('Looking forward to speaking with you!') + signOff,
       }),
       attachments: LOGOS,
@@ -97,7 +97,7 @@ function confirmationEmail({ firstName, company, serviceLabel, meetLink, schedul
     ].join('\n\n'),
     html: layout({
       preheader: "We've received your inquiry. Our Marketing Expert will be in touch shortly.",
-      body: greeting + p(esc(INTRO))
+      body: greeting(firstName) + p(esc(INTRO))
         + p(`We've received your inquiry about <strong style="color:#0b1226;">${esc(serviceLabel)}</strong>, and our Marketing Expert will be in touch shortly to learn more about <strong style="color:#0b1226;">${esc(company)}</strong> and explore how Roof Engine can help turn more homeowner inquiries into booked inspections.`)
         + panel(`<div style="font-family:${FONT};font-size:16px;line-height:1.5;color:#3d4457;margin:0 0 16px;">Can't wait? Give us a call at <a href="tel:+17868233553" style="color:#e8802a;text-decoration:none;font-weight:600;">${PHONE}</a>.</div>`
           + button('tel:+17868233553', `Call ${PHONE}`), 'center')
@@ -107,4 +107,28 @@ function confirmationEmail({ firstName, company, serviceLabel, meetLink, schedul
   };
 }
 
-module.exports = { confirmationEmail };
+// Reminder before a booked call: when is 'day' (24 hours before) or 'hour' (1 hour before).
+// Placeholder wording in Rebecca's voice; swap in her draft when there is one.
+function reminderEmail({ when, firstName, company, meetLink, scheduledLabel }) {
+  const day = when === 'day';
+  const lead = day
+    ? `Just a friendly reminder that your call with our Marketing Expert is tomorrow. We're looking forward to learning more about ${company} and exploring how Roof Engine can help turn more homeowner inquiries into booked inspections.`
+    : "Your call with our Marketing Expert starts in 1 hour. When it's time, use the button below to join on Google Meet.";
+  const help = `Need to reschedule? Just reply to this email or give us a call at ${PHONE}.`;
+  return {
+    subject: day ? 'Reminder: Your Roof Engine Call is Tomorrow' : 'Starting Soon: Your Roof Engine Call is in 1 Hour',
+    text: [
+      `Hi ${firstName},`, lead, meetText(meetLink, scheduledLabel), help,
+      'Looking forward to speaking with you!', 'Best Regards,\nRebecca',
+    ].join('\n\n'),
+    html: layout({
+      preheader: day ? `Your Roof Engine call is tomorrow, ${scheduledLabel}.` : `Your Roof Engine call starts in 1 hour (${scheduledLabel}).`,
+      body: greeting(firstName) + p(esc(lead)) + meetPanel(meetLink, scheduledLabel)
+        + p(`Need to reschedule? Just reply to this email or give us a call at <a href="tel:+17868233553" style="color:#e8802a;text-decoration:none;font-weight:600;">${PHONE}</a>.`)
+        + p('Looking forward to speaking with you!') + signOff,
+    }),
+    attachments: LOGOS,
+  };
+}
+
+module.exports = { confirmationEmail, reminderEmail };

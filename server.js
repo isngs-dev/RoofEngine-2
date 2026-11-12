@@ -1,9 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const sgMail = require('@sendgrid/mail');
-const { createMeetEvent, getAvailability, upcomingWeekdays } = require('./calendar');
+const { createMeetEvent, getAvailability, upcomingWeekdays, upcomingCalls, markEvent, callLabel } = require('./calendar');
 const { sendGmail } = require('./gmail');
-const { confirmationEmail } = require('./emails');
+const { confirmationEmail, reminderEmail } = require('./emails');
 const { saveInquiry } = require('./supabase');
 
 const app = express();
@@ -67,6 +67,7 @@ app.post('/api/contact', async (req, res) => {
         endISO: `${booking.date}T${endTime}:00`,
         timeZone: booking.timeZone,
         guestEmail: email,
+        guest: { firstName: String(name).trim().split(/\s+/)[0], company: String(company) },
       });
       scheduledLabel = `${booking.date} at ${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'} ET`;
     } catch (err) {
@@ -111,6 +112,41 @@ app.post('/api/contact', async (req, res) => {
   }
   res.json({ ok: true, meetLink });
 });
+
+// Reminders: 24 hours and 1 hour before each booked call, checked every 5 minutes.
+// A reminder is skipped when the call was booked inside its window (the confirmation just went out),
+// and if the server missed the day-before one, only the closer reminder is sent.
+const HOUR = 3600000;
+const REMINDERS = [{ flag: 'remindedDay', when: 'day', before: 24 * HOUR }, { flag: 'remindedHour', when: 'hour', before: HOUR }];
+
+async function sendDueReminders() {
+  const now = Date.now();
+  for (const event of await upcomingCalls(24)) {
+    try {
+      const props = event.extendedProperties.private;
+      const start = new Date(event.start.dateTime).getTime();
+      const declined = (event.attendees || []).some((a) => a.email === props.email && a.responseStatus === 'declined');
+      const due = REMINDERS.filter((r) => !props[r.flag] && start > now && start - now <= r.before
+        && new Date(event.created).getTime() < start - r.before);
+      if (!due.length || declined || !event.hangoutLink) continue;
+      await sendMail({
+        to: props.email,
+        from: FROM_EMAIL,
+        ...reminderEmail({
+          when: due[due.length - 1].when, firstName: props.firstName, company: props.company,
+          meetLink: event.hangoutLink, scheduledLabel: callLabel(event.start.dateTime),
+        }),
+      });
+      await markEvent(event, Object.fromEntries(due.map((r) => [r.flag, 'sent'])));
+    } catch (err) {
+      console.error('Reminder error:', event.id, err.response ? err.response.body || err.response.data : err.message);
+    }
+  }
+}
+
+const checkReminders = () => sendDueReminders().catch((err) => console.error('Reminder check failed:', err.message));
+checkReminders();
+setInterval(checkReminders, 5 * 60000);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
