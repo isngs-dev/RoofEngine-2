@@ -41,6 +41,8 @@ app.post('/api/contact', async (req, res) => {
   if (!name || !company || !email || !phone || !service) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
+  // Ticked box on the form. Only these leads may get the AI voice call.
+  const callConsent = req.body.callConsent === 'yes';
 
   const serviceLabel = SERVICE_LABELS[service] || service;
 
@@ -76,7 +78,7 @@ app.post('/api/contact', async (req, res) => {
     }
   }
 
-  await saveInquiry({ name, company, email, phone, service, message, meetLink, booking });
+  await saveInquiry({ name, company, email, phone, service, message, meetLink, booking, callConsent });
 
   const adminEmail = {
     to: ADMIN_EMAILS,
@@ -90,6 +92,7 @@ app.post('/api/contact', async (req, res) => {
       `Phone: ${phone}`,
       `Service: ${serviceLabel}`,
       `Message: ${message || '—'}`,
+      `AI call consent: ${callConsent ? 'Yes' : 'No'}`,
       scheduledLabel ? `Call scheduled: ${scheduledLabel}` : null,
       meetLink ? `Meet link: ${meetLink}` : null,
     ].filter(Boolean).join('\n'),

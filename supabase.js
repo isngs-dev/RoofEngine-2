@@ -10,7 +10,7 @@ function getClient() {
 
 // Stores one contact-form submission. Never throws — a DB hiccup shouldn't
 // stop the customer's confirmation email from going out.
-async function saveInquiry({ name, company, email, phone, service, message, meetLink, booking }) {
+async function saveInquiry({ name, company, email, phone, service, message, meetLink, booking, callConsent }) {
   const supabase = getClient();
   if (!supabase) {
     console.error('Supabase not configured — skipping save.');
@@ -27,6 +27,7 @@ async function saveInquiry({ name, company, email, phone, service, message, meet
     booking_date: booking ? booking.date : null,
     booking_time: booking ? booking.time : null,
     booking_timezone: booking ? booking.timeZone : null,
+    call_consent: callConsent, // with created_at, this is the record of when they agreed to the AI call
   });
   if (error) console.error('Supabase insert error:', error.message);
 }

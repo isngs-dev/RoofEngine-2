@@ -550,6 +550,11 @@ height="0" width="0" style="display:none;visibility:hidden">
               <label style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:rgba(11,18,38,0.6);">Message</label>
               <textarea name="message" rows="3" placeholder="Tell us about your business or what you're looking for" style="padding:13px 15px;border-radius:9px;border:1px solid rgba(11,18,38,0.15);background:#ffffff;font-size:14.5px;font-family:'IBM Plex Sans',sans-serif;color:#0b1226;outline:none;resize:vertical;"></textarea>
             </div>
+            <!-- Optional on purpose: consent to automated calls can't be a condition of submitting (TCPA). The AI call only goes to people who tick it. -->
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
+              <input type="checkbox" name="callConsent" value="yes" style="width:18px;height:18px;margin:2px 0 0;flex-shrink:0;accent-color:#e8802a;cursor:pointer;" />
+              <span style="font-size:12.5px;line-height:1.55;color:rgba(11,18,38,0.62);">I agree to receive a call from Roof Engine (iSN Business Solutions), including an AI voice assistant, at the phone number above about my inquiry. Calls may be recorded. Consent is not required to submit this form.</span>
+            </label>
             <button type="submit" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:16px 24px;background:#0b1226;color:#ffffff;font-family:'Archivo',sans-serif;font-weight:700;font-size:15.5px;border-radius:9px;border:none;cursor:pointer;margin-top:6px;">Build My Roof Engine <span style="color:#e8802a;">→</span></button>
           </form>
       </div>
