@@ -78,6 +78,23 @@ app.post('/api/contact', async (req, res) => {
     }
   }
 
+  // Hand the lead to Rebecca, who calls within ~30 s when the call box is ticked.
+  // Placed after the booking checks so a failed booking (which the visitor retries) can't trigger two calls.
+  // Not awaited: the visitor shouldn't wait on it, and a failure here only gets logged.
+  const rebeccaUrl = process.env.REBECCA_FORM_URL;
+  if (rebeccaUrl) {
+    fetch(rebeccaUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name, email, phone, company, service, message,
+        callConsent: callConsent ? 'yes' : 'no',
+      }),
+    })
+      .then((r) => { if (!r.ok) console.warn('Rebecca intake failed: HTTP', r.status); })
+      .catch((err) => console.warn('Rebecca intake failed:', err.message));
+  }
+
   await saveInquiry({ name, company, email, phone, service, message, meetLink, booking, callConsent });
 
   const adminEmail = {
