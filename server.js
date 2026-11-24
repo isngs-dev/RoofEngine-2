@@ -27,6 +27,20 @@ const SERVICE_LABELS = {
   other: 'Other',
 };
 
+// Country code from the dropdown + the number as typed → one international number, e.g. +447700900123.
+// ponytail: light rules, not full per-country validation; use libphonenumber-js if bad numbers get through.
+function toInternational(countryCode, number) {
+  if (!/^\+\d{1,4}$/.test(countryCode)) return null;
+  let digits = String(number || '').replace(/\D/g, '');
+  if (countryCode === '+1') {
+    digits = digits.replace(/^1(?=\d{10}$)/, ''); // typed the 1 again
+    if (digits.length !== 10) return null;
+  } else if (countryCode !== '+39') {
+    digits = digits.replace(/^0/, ''); // local leading 0 (UK 07700… → +44 7700…); Italy keeps its 0
+  }
+  return digits.length >= 4 && countryCode.length - 1 + digits.length <= 15 ? countryCode + digits : null;
+}
+
 app.get('/api/availability', async (req, res) => {
   try {
     res.json(await getAvailability());
@@ -37,9 +51,14 @@ app.get('/api/availability', async (req, res) => {
 });
 
 app.post('/api/contact', async (req, res) => {
-  const { name, company, email, phone, service, message, booking } = req.body || {};
-  if (!name || !company || !email || !phone || !service) {
+  // countryCode defaults to +1 for pages loaded before the dropdown existed (they only took US numbers).
+  const { name, company, email, phone: phoneInput, countryCode = '+1', service, message, booking } = req.body || {};
+  if (!name || !company || !email || !phoneInput || !service) {
     return res.status(400).json({ error: 'Missing required fields' });
+  }
+  const phone = toInternational(countryCode, phoneInput);
+  if (!phone) {
+    return res.status(400).json({ error: 'Please enter a valid phone number for the selected country.' });
   }
   // Ticked box on the form. Only these leads may get the AI voice call.
   const callConsent = req.body.callConsent === 'yes';
